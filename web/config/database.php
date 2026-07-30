@@ -41,9 +41,18 @@ define('UPLOAD_URL', APP_URL . '/uploads/plant-photos/');
 define('MAX_FILE_SIZE', 10 * 1024 * 1024); // 10MB
 define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'webp']);
 
-// AI Service
-define('PLANTNET_API_KEY', ''); // Add your Pl@ntNet API key here
+// AI Service — Pl@ntNet (free: 500 identifications/day at https://my.plantnet.org/)
+define('PLANTNET_API_KEY', '2b10Xw63XlnXmpngqy4HksFoJe'); // Add your Pl@ntNet API key here
 define('PLANTNET_API_URL', 'https://my-api.plantnet.org/v2/identify/all');
+
+// AI Service — Hugging Face (free tier at https://huggingface.co/settings/tokens)
+define('HUGGINGFACE_API_KEY', ''); // Add your Hugging Face API token here
+define('HUGGINGFACE_MODEL', 'google/vit-base-patch16-224'); // Image classification model
+
+// AI Ensemble Tuning
+define('AI_CONFIDENCE_THRESHOLD', 10);   // Min confidence % to show a candidate
+define('AI_MAX_CANDIDATES', 5);          // Max candidates returned to frontend
+define('AI_CONSENSUS_BOOST', 15);        // Extra confidence % when 2+ providers agree
 
 // Security: JWT secret (change in production!)
 define('JWT_SECRET', 'sH3rb_' . hash('sha256', __DIR__ . '_sanjivani_2026_secure'));

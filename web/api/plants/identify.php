@@ -44,6 +44,8 @@ if ($lat && $lng) {
 jsonResponse([
     'success' => true,
     'source' => $result['source'],
+    'providers_queried' => $result['providers_queried'] ?? [],
+    'consensus_matches' => $result['consensus_matches'] ?? 0,
     'candidates' => $result['candidates'],
     'photo_filename' => $uploadResult['filename'],
     'photo_url' => $uploadResult['url'],
