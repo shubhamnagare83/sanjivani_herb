@@ -61,6 +61,16 @@ function handlePhotoUpload(array $file): array {
         return ['success' => false, 'error' => 'Invalid file type. Allowed: ' . implode(', ', ALLOWED_EXTENSIONS)];
     }
     
+    // Strict MIME type verification using finfo
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!in_array($mimeType, $allowedMimes)) {
+        return ['success' => false, 'error' => 'Invalid file content. Must be a valid image file.'];
+    }
+    
     // Create upload directory if it doesn't exist
     if (!is_dir(UPLOAD_DIR)) {
         mkdir(UPLOAD_DIR, 0755, true);

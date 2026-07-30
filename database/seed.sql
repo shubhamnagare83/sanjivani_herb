@@ -10,11 +10,10 @@ INSERT INTO institutions (id, name, slug, campus_center_lat, campus_center_lng, 
 ('inst-0001-0001-0001-000000000001', 'Sanjivani University', 'sanjivani-university', 19.8762, 74.5981, 17);
 
 -- 2. Admin + sample users (password = 'password123' hashed with PHP password_hash)
--- Hash: $2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
 INSERT INTO users (id, institution_id, email, password_hash, full_name, role) VALUES
-('user-0001-0001-0001-000000000001', 'inst-0001-0001-0001-000000000001', 'admin@sanjivani.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Dr. Priya Sharma', 'admin'),
-('user-0001-0001-0001-000000000002', 'inst-0001-0001-0001-000000000001', 'verifier@sanjivani.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Prof. Rajesh Patil', 'verifier'),
-('user-0001-0001-0001-000000000003', 'inst-0001-0001-0001-000000000001', 'student@sanjivani.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Shubham Nagare', 'contributor');
+('user-0001-0001-0001-000000000001', 'inst-0001-0001-0001-000000000001', 'admin@sanjivani.edu', '$2y$10$fz3ca6XJj/wVwIuS4IaJB.NTaFW3ex6cTsYfxbwM5fTGFrJb5CiEm', 'Dr. Priya Sharma', 'admin'),
+('user-0001-0001-0001-000000000002', 'inst-0001-0001-0001-000000000001', 'verifier@sanjivani.edu', '$2y$10$fz3ca6XJj/wVwIuS4IaJB.NTaFW3ex6cTsYfxbwM5fTGFrJb5CiEm', 'Prof. Rajesh Patil', 'verifier'),
+('user-0001-0001-0001-000000000003', 'inst-0001-0001-0001-000000000001', 'student@sanjivani.edu', '$2y$10$fz3ca6XJj/wVwIuS4IaJB.NTaFW3ex6cTsYfxbwM5fTGFrJb5CiEm', 'Shubham Nagare', 'contributor');
 
 -- 3. Campus Zones
 INSERT INTO zones (id, institution_id, name, description, center_lat, center_lng, color_hex) VALUES

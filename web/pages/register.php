@@ -6,11 +6,13 @@ if ($user) {
     exit;
 }
 $error = $_GET['error'] ?? null;
+$csrfToken = generateCSRFToken();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register | Sanjivani Herb Mapper</title>
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,28 +31,48 @@ $error = $_GET['error'] ?? null;
       </div>
     <?php endif; ?>
 
-    <form action="../api/auth/register.php" method="POST">
+    <form action="../api/auth/register.php" method="POST" id="registerForm">
+      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+
       <div class="form-group">
-        <label class="form-label">Full Name</label>
-        <input type="text" name="full_name" class="form-control" placeholder="Shubham Nagare" required>
+        <label class="form-label" for="regName">Full Name</label>
+        <input type="text" name="full_name" id="regName" class="form-control" placeholder="Shubham Nagare" required>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Email Address</label>
-        <input type="email" name="email" class="form-control" placeholder="student@sanjivani.edu" required>
+        <label class="form-label" for="regEmail">Email Address</label>
+        <input type="email" name="email" id="regEmail" class="form-control" placeholder="student@sanjivani.edu" required>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="At least 6 characters" required minlength="6">
+        <label class="form-label" for="regPassword">Password</label>
+        <input type="password" name="password" id="regPassword" class="form-control" placeholder="At least 6 characters" required minlength="6">
       </div>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+      <div class="form-group">
+        <label class="form-label" for="regConfirmPassword">Confirm Password</label>
+        <input type="password" name="confirm_password" id="regConfirmPassword" class="form-control" placeholder="Re-enter password" required minlength="6">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+        <i class="fa-solid fa-user-plus"></i> Create Account
+      </button>
     </form>
 
     <div style="margin-top: 1.5rem; text-align: center; font-size: 0.9rem;">
       Already have an account? <a href="login.php">Sign in</a>
     </div>
   </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+      const pw = document.getElementById('regPassword').value;
+      const cpw = document.getElementById('regConfirmPassword').value;
+      if (pw !== cpw) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+      }
+    });
+  </script>
 </body>
 </html>

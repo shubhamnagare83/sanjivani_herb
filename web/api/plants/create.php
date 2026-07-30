@@ -61,43 +61,55 @@ $status = in_array($user['role'], ['admin', 'verifier']) ? 'verified' : 'pending
 
 $recordId = generateUUID();
 
-// Insert plant record
-$stmt = $db->prepare("
-    INSERT INTO plant_records (id, institution_id, species_id, zone_id, latitude, longitude, 
-        location_accuracy_m, status, ai_confidence, ai_candidates, notes, submitted_by, verified_by, verified_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-");
+// Sanitize notes
+$notes = isset($data['notes']) ? sanitize($data['notes']) : null;
 
-$verifiedBy = $status === 'verified' ? $user['id'] : null;
-$verifiedAt = $status === 'verified' ? date('Y-m-d H:i:s') : null;
+$db->beginTransaction();
 
-$stmt->execute([
-    $recordId,
-    $user['institution_id'],
-    $speciesId,
-    $zoneId,
-    $lat,
-    $lng,
-    $data['location_accuracy_m'] ?? null,
-    $status,
-    $data['ai_confidence'] ?? null,
-    $data['ai_candidates'] ?? null,
-    $data['notes'] ?? null,
-    $user['id'],
-    $verifiedBy,
-    $verifiedAt
-]);
+try {
+    // Insert plant record
+    $stmt = $db->prepare("
+        INSERT INTO plant_records (id, institution_id, species_id, zone_id, latitude, longitude, 
+            location_accuracy_m, status, ai_confidence, ai_candidates, notes, submitted_by, verified_by, verified_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
 
-// Insert photo record
-if ($photoFilename) {
-    $photoId = generateUUID();
-    $stmt = $db->prepare("INSERT INTO plant_photos (id, plant_record_id, file_path, original_name, is_primary) VALUES (?, ?, ?, ?, 1)");
-    $stmt->execute([$photoId, $recordId, $photoFilename, $_FILES['photo']['name'] ?? 'photo.jpg']);
+    $verifiedBy = $status === 'verified' ? $user['id'] : null;
+    $verifiedAt = $status === 'verified' ? date('Y-m-d H:i:s') : null;
+
+    $stmt->execute([
+        $recordId,
+        $user['institution_id'],
+        $speciesId,
+        $zoneId,
+        $lat,
+        $lng,
+        $data['location_accuracy_m'] ?? null,
+        $status,
+        $data['ai_confidence'] ?? null,
+        $data['ai_candidates'] ?? null,
+        $notes,
+        $user['id'],
+        $verifiedBy,
+        $verifiedAt
+    ]);
+
+    // Insert photo record
+    if ($photoFilename) {
+        $photoId = generateUUID();
+        $stmt = $db->prepare("INSERT INTO plant_photos (id, plant_record_id, file_path, original_name, is_primary) VALUES (?, ?, ?, ?, 1)");
+        $stmt->execute([$photoId, $recordId, $photoFilename, $_FILES['photo']['name'] ?? 'photo.jpg']);
+    }
+
+    $db->commit();
+} catch (Exception $e) {
+    $db->rollBack();
+    jsonResponse(['error' => 'Failed to save plant record'], 500);
 }
 
 // Log activity
 $speciesName = $data['common_name'] ?? $data['scientific_name'] ?? 'Unknown plant';
-logActivity($user['institution_id'], $user['id'], 'create', 'plant_record', $recordId, "Submitted $speciesName observation");
+logActivity($user['institution_id'], $user['id'], 'create', 'plant_record', $recordId, "Submitted " . sanitize($speciesName) . " observation");
 
 jsonResponse([
     'success' => true,

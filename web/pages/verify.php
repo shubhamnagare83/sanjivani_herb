@@ -73,6 +73,16 @@ $user = requireRole('verifier');
         });
     }
 
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function renderQueue(records) {
       const container = document.getElementById('queueContainer');
       container.innerHTML = '';
@@ -92,21 +102,29 @@ $user = requireRole('verifier');
         const card = document.createElement('div');
         card.className = 'glass-card queue-card';
 
-        let imgHtml = r.photo_url ? `<img src="${r.photo_url}" style="width:100%; height:140px; object-fit:cover; border-radius: var(--radius-sm);">` : `<div style="height:140px; background:rgba(0,0,0,0.3); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center;">No Image</div>`;
+        const cName = escapeHtml(r.common_name || r.scientific_name || 'Unidentified');
+        const sName = escapeHtml(r.scientific_name || 'Species Pending');
+        const subName = escapeHtml(r.submitted_by_name || 'Contributor');
+        const zName = escapeHtml(r.zone_name || 'General Campus');
+        const notes = escapeHtml(r.notes || 'None');
+        const aiScore = r.ai_confidence ? escapeHtml(r.ai_confidence + '%') : 'N/A';
+        const photoUrl = r.photo_url ? escapeHtml(r.photo_url) : null;
+
+        let imgHtml = photoUrl ? `<img src="${photoUrl}" style="width:100%; height:140px; object-fit:cover; border-radius: var(--radius-sm);">` : `<div style="height:140px; background:rgba(0,0,0,0.3); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center;">No Image</div>`;
 
         card.innerHTML = `
           <div>${imgHtml}</div>
           <div>
-            <h3 style="font-size: 1.2rem; margin-bottom: 0.25rem;">${r.common_name || r.scientific_name || 'Unidentified'}</h3>
-            <p style="font-style: italic; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">${r.scientific_name || 'Species Pending'}</p>
-            <p style="font-size: 0.85rem; margin-bottom: 0.25rem;"><strong>Submitted By:</strong> ${r.submitted_by_name || 'Contributor'}</p>
-            <p style="font-size: 0.85rem; margin-bottom: 0.25rem;"><strong>Zone:</strong> ${r.zone_name || 'General Campus'}</p>
-            <p style="font-size: 0.85rem; margin-bottom: 0.5rem;"><strong>Notes:</strong> ${r.notes || 'None'}</p>
-            <span class="badge badge-pending">AI Score: ${r.ai_confidence ? r.ai_confidence + '%' : 'N/A'}</span>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.25rem;">${cName}</h3>
+            <p style="font-style: italic; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">${sName}</p>
+            <p style="font-size: 0.85rem; margin-bottom: 0.25rem;"><strong>Submitted By:</strong> ${subName}</p>
+            <p style="font-size: 0.85rem; margin-bottom: 0.25rem;"><strong>Zone:</strong> ${zName}</p>
+            <p style="font-size: 0.85rem; margin-bottom: 0.5rem;"><strong>Notes:</strong> ${notes}</p>
+            <span class="badge badge-pending">AI Score: ${aiScore}</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <button onclick="handleAction('${r.id}', 'approved')" class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i> Approve</button>
-            <button onclick="handleAction('${r.id}', 'rejected')" class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i> Reject</button>
+            <button onclick="handleAction('${escapeHtml(r.id)}', 'approved')" class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i> Approve</button>
+            <button onclick="handleAction('${escapeHtml(r.id)}', 'rejected')" class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i> Reject</button>
           </div>
         `;
 

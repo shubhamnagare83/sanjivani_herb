@@ -102,6 +102,16 @@ $families = $db->query("SELECT DISTINCT family FROM species WHERE family IS NOT 
         });
     }
 
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function renderGrid(speciesList) {
       const grid = document.getElementById('speciesGrid');
       grid.innerHTML = '';
@@ -112,23 +122,31 @@ $families = $db->query("SELECT DISTINCT family FROM species WHERE family IS NOT 
       }
 
       speciesList.forEach(s => {
-        let nativeBadge = `<span class="badge badge-${s.native_status || 'unknown'}">${s.native_status || 'unknown'}</span>`;
-        let imgHtml = s.reference_image_url ? `<img src="${s.reference_image_url}" style="width:100%; height:160px; object-fit:cover; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">` : '';
+        const cName = escapeHtml(s.common_name || s.scientific_name);
+        const sName = escapeHtml(s.scientific_name);
+        const family = escapeHtml(s.family || 'N/A');
+        const desc = escapeHtml(s.description || 'No description available.');
+        const nativeStat = escapeHtml(s.native_status || 'unknown');
+        const imgUrl = s.reference_image_url ? escapeHtml(s.reference_image_url) : null;
+        const specId = escapeHtml(s.id);
+
+        let nativeBadge = `<span class="badge badge-${nativeStat}">${nativeStat}</span>`;
+        let imgHtml = imgUrl ? `<img src="${imgUrl}" style="width:100%; height:160px; object-fit:cover; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">` : '';
 
         const card = document.createElement('div');
         card.className = 'glass-card species-card';
         card.innerHTML = `
           <div>
             ${imgHtml}
-            <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">${s.common_name || s.scientific_name}</h3>
-            <p style="font-style: italic; color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 0.5rem;">${s.scientific_name}</p>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;"><strong>Family:</strong> ${s.family || 'N/A'}</p>
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">${cName}</h3>
+            <p style="font-style: italic; color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 0.5rem;">${sName}</p>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;"><strong>Family:</strong> ${family}</p>
             <div style="margin-bottom: 0.75rem;">${nativeBadge}</div>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${s.description || 'No description available.'}</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${desc}</p>
           </div>
           <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-primary);"><i class="fa-solid fa-tree"></i> ${s.plant_count} logged</span>
-            <a href="dashboard.php?species_id=${s.id}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-map"></i> View Map</a>
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-primary);"><i class="fa-solid fa-tree"></i> ${parseInt(s.plant_count)} logged</span>
+            <a href="dashboard.php?species_id=${specId}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-map"></i> View Map</a>
           </div>
         `;
         grid.appendChild(card);

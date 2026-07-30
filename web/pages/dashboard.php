@@ -206,6 +206,16 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
         });
     }
 
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     // Add marker to map
     function addPlantMarker(plant) {
       if (currentMarkers[plant.id]) {
@@ -215,19 +225,25 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
       const icon = getMarkerIcon(plant.status, plant.native_status);
       const marker = L.marker([plant.latitude, plant.longitude], { icon });
 
-      let photoHtml = plant.photo_url ? `<img src="${plant.photo_url}" alt="${plant.common_name}">` : '';
-      let statusBadge = `<span class="badge badge-${plant.status}">${plant.status}</span>`;
-      let nativeBadge = plant.native_status === 'invasive' ? `<span class="badge badge-invasive">Invasive ⚠️</span>` : (plant.native_status ? `<span class="badge badge-native">${plant.native_status}</span>` : '');
+      const cName = escapeHtml(plant.common_name || 'Unidentified Plant');
+      const sName = escapeHtml(plant.scientific_name || '');
+      const zName = escapeHtml(plant.zone_name || 'N/A');
+      const subName = escapeHtml(plant.submitted_by_name || 'Anonymous');
+      const qSlug = escapeHtml(plant.qr_slug || '');
+
+      let photoHtml = plant.photo_url ? `<img src="${escapeHtml(plant.photo_url)}" alt="${cName}">` : '';
+      let statusBadge = `<span class="badge badge-${escapeHtml(plant.status)}">${escapeHtml(plant.status)}</span>`;
+      let nativeBadge = plant.native_status === 'invasive' ? `<span class="badge badge-invasive">Invasive ⚠️</span>` : (plant.native_status ? `<span class="badge badge-native">${escapeHtml(plant.native_status)}</span>` : '');
 
       let popupContent = `
         <div class="map-popup-card">
           ${photoHtml}
-          <h4 style="margin-bottom:0.2rem;">${plant.common_name || 'Unidentified Plant'}</h4>
-          <p style="font-style: italic; color: #6b7280; font-size: 0.85rem; margin-bottom: 0.5rem;">${plant.scientific_name || ''}</p>
+          <h4 style="margin-bottom:0.2rem;">${cName}</h4>
+          <p style="font-style: italic; color: #6b7280; font-size: 0.85rem; margin-bottom: 0.5rem;">${sName}</p>
           <div style="margin-bottom:0.5rem;">${statusBadge} ${nativeBadge}</div>
-          <p style="font-size: 0.82rem; margin-bottom: 0.5rem;"><strong>Zone:</strong> ${plant.zone_name || 'N/A'}</p>
-          <p style="font-size: 0.82rem; margin-bottom: 0.75rem;"><strong>By:</strong> ${plant.submitted_by_name || 'Anonymous'}</p>
-          ${plant.qr_slug ? `<a href="plant-detail.php?slug=${plant.qr_slug}" target="_blank" class="btn btn-primary btn-sm" style="width:100%; display:block; text-align:center;"><i class="fa-solid fa-qrcode"></i> View QR Details</a>` : ''}
+          <p style="font-size: 0.82rem; margin-bottom: 0.5rem;"><strong>Zone:</strong> ${zName}</p>
+          <p style="font-size: 0.82rem; margin-bottom: 0.75rem;"><strong>By:</strong> ${subName}</p>
+          ${qSlug ? `<a href="plant-detail.php?slug=${qSlug}" target="_blank" class="btn btn-primary btn-sm" style="width:100%; display:block; text-align:center;"><i class="fa-solid fa-qrcode"></i> View QR Details</a>` : ''}
         </div>
       `;
 

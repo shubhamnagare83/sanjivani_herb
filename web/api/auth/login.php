@@ -10,28 +10,50 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['error' => 'Method not allowed'], 405);
 }
 
-$data = getJsonBody();
+// Determine if it's a JSON API call or form submission
+$isApi = isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false;
 
-// Also handle form data
+$data = getJsonBody();
 if (empty($data)) {
     $data = $_POST;
 }
 
-$error = validateRequired($data, ['email', 'password']);
-if ($error) jsonResponse(['error' => $error], 400);
+// Validate CSRF token for form submissions (not API calls)
+if (!$isApi && !empty($data['csrf_token'])) {
+    if (!validateCSRFToken($data['csrf_token'])) {
+        if ($isApi) {
+            jsonResponse(['error' => 'Invalid CSRF token'], 403);
+        }
+        header('Location: ' . APP_URL . '/pages/login.php?error=' . urlencode('Session expired. Please try again.'));
+        exit;
+    }
+}
 
-$result = loginUser($data['email'], $data['password']);
+$error = validateRequired($data, ['email', 'password']);
+if ($error) {
+    if ($isApi) jsonResponse(['error' => $error], 400);
+    header('Location: ' . APP_URL . '/pages/login.php?error=' . urlencode($error));
+    exit;
+}
+
+// Sanitize email
+$email = filter_var(trim($data['email']), FILTER_SANITIZE_EMAIL);
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if ($isApi) jsonResponse(['error' => 'Invalid email format'], 400);
+    header('Location: ' . APP_URL . '/pages/login.php?error=' . urlencode('Invalid email format'));
+    exit;
+}
+
+$result = loginUser($email, $data['password']);
 
 if ($result['success']) {
-    // If it's an AJAX/API request, return JSON
-    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+    if ($isApi) {
         jsonResponse($result);
     }
-    // Otherwise redirect to dashboard
     header('Location: ' . APP_URL . '/pages/dashboard.php');
     exit;
 } else {
-    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+    if ($isApi) {
         jsonResponse($result, 401);
     }
     header('Location: ' . APP_URL . '/pages/login.php?error=' . urlencode($result['error']));

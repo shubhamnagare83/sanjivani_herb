@@ -46,11 +46,15 @@ $sql = "
     LIMIT ? OFFSET ?
 ";
 
-$params[] = $pagination['limit'];
-$params[] = $pagination['offset'];
-
 $stmt = $db->prepare($sql);
-$stmt->execute($params);
+$paramIdx = 1;
+foreach ($params as $param) {
+    $stmt->bindValue($paramIdx++, $param);
+}
+$stmt->bindValue($paramIdx++, $pagination['limit'], PDO::PARAM_INT);
+$stmt->bindValue($paramIdx++, $pagination['offset'], PDO::PARAM_INT);
+
+$stmt->execute();
 $species = $stmt->fetchAll();
 
 jsonResponse([
