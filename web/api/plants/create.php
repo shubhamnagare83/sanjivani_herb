@@ -18,6 +18,13 @@ $db = getDB();
 // Get data from form or JSON
 $data = !empty($_POST) ? $_POST : getJsonBody();
 
+// CSRF validation for session-authenticated web requests
+if (isset($_SESSION['user_id']) && !empty($_POST)) {
+    if (empty($data['csrf_token']) || !validateCSRFToken($data['csrf_token'])) {
+        jsonResponse(['error' => 'Invalid or expired CSRF token'], 403);
+    }
+}
+
 $error = validateRequired($data, ['latitude', 'longitude']);
 if ($error) jsonResponse(['error' => $error], 400);
 

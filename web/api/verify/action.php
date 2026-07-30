@@ -17,6 +17,13 @@ $db = getDB();
 $data = getJsonBody();
 if (empty($data)) $data = $_POST;
 
+// Validate CSRF token for web session actions
+$csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+$tokenToTest = $data['csrf_token'] ?? $csrfHeader;
+if (isset($_SESSION['user_id']) && !validateCSRFToken($tokenToTest)) {
+    jsonResponse(['error' => 'Invalid or missing CSRF token'], 403);
+}
+
 $error = validateRequired($data, ['plant_record_id', 'action']);
 if ($error) jsonResponse(['error' => $error], 400);
 

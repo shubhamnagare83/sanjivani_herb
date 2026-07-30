@@ -124,6 +124,7 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
       <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">Review species, campus zone, and add optional notes.</p>
 
       <form id="plantForm">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCSRFToken()) ?>">
         <input type="hidden" id="selectedSpeciesId" name="species_id">
         <input type="hidden" id="selectedScientific" name="scientific_name">
         <input type="hidden" id="selectedCommon" name="common_name">

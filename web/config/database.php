@@ -58,8 +58,9 @@ header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Permissions-Policy: camera=(self), microphone=(), geolocation=(self), payment=()');
-// Content Security Policy — blocks inline script injection and external resource loading
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self'; frame-ancestors 'none';");
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+// Content Security Policy — blocks inline script injection and unauthorized external connections
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com https://server.arcgisonline.com; frame-ancestors 'none';");
 
 /**
  * Get PDO database connection
