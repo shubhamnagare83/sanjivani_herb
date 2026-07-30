@@ -149,9 +149,9 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
     // Initialize Map
     const map = L.map('map').setView([CENTER_LAT, CENTER_LNG], DEFAULT_ZOOM);
 
-    // Dark Tile Layer (CartoDB Dark Matter)
+    // Light Tile Layer (CartoDB Voyager Light)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20
     }).addTo(map);
