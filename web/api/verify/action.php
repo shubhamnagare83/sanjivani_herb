@@ -64,7 +64,7 @@ try {
             }
             if (isset($data['notes'])) {
                 $updates[] = 'notes = ?';
-                $updateParams[] = $data['notes'];
+                $updateParams[] = sanitize($data['notes']);
             }
             
             $updateParams[] = $plantId;
@@ -102,5 +102,6 @@ try {
     
 } catch (Exception $e) {
     $db->rollBack();
-    jsonResponse(['error' => 'Verification failed: ' . $e->getMessage()], 500);
+    error_log('Verification error: ' . $e->getMessage());
+    jsonResponse(['error' => 'Verification failed. Please try again.'], 500);
 }

@@ -10,8 +10,14 @@
 function jsonResponse(mixed $data, int $code = 200): void {
     http_response_code($code);
     header('Content-Type: application/json');
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    // Restrict CORS to same-origin only — never use wildcard '*'
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $allowed = defined('APP_URL') ? parse_url(APP_URL, PHP_URL_HOST) : 'localhost';
+    if ($origin && parse_url($origin, PHP_URL_HOST) === $allowed) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    }
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
@@ -198,11 +204,16 @@ function sanitize(string $input): string {
 }
 
 /**
- * Handle CORS preflight
+ * Handle CORS preflight — restricted to same-origin
  */
 function handleCORS(): void {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $allowed = defined('APP_URL') ? parse_url(APP_URL, PHP_URL_HOST) : 'localhost';
+    if ($origin && parse_url($origin, PHP_URL_HOST) === $allowed) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    }
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
     
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

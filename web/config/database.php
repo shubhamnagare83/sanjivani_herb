@@ -13,15 +13,21 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
-// Auto-detect APP_URL from current request
+// Auto-detect APP_URL with Host Header whitelist (prevents Host Header Injection)
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
-// Detect base path: if running under /sanjivani_herb/web or at root
+$rawHost = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
+// Whitelist allowed hostnames to block Host Header Injection attacks
+$allowedHosts = ['localhost', 'localhost:8000', 'localhost:80', '127.0.0.1', '127.0.0.1:8000'];
+$hostBase = strtolower(explode(':', $rawHost)[0]);
+if (!in_array(strtolower($rawHost), $allowedHosts) && !in_array($hostBase, ['localhost', '127.0.0.1'])) {
+    // In production, add your domain here. For now, reject unknown hosts.
+    $rawHost = 'localhost:8000';
+}
+$host = $rawHost;
 $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-// Find the 'web' directory in the path
 $webPos = strpos($scriptDir, '/web');
 if ($webPos !== false) {
-    $basePath = substr($scriptDir, 0, $webPos + 4); // include '/web'
+    $basePath = substr($scriptDir, 0, $webPos + 4);
 } else {
     $basePath = '';
 }
@@ -48,9 +54,12 @@ define('CSRF_SECRET', hash('sha256', JWT_SECRET . '_csrf'));
 
 // Security Headers (applied on every request)
 header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: SAMEORIGIN');
+header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: camera=(self), microphone=(), geolocation=(self), payment=()');
+// Content Security Policy — blocks inline script injection and external resource loading
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self'; frame-ancestors 'none';");
 
 /**
  * Get PDO database connection

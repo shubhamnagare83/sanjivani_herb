@@ -1,0 +1,12 @@
+# Block PHP execution in uploads directory (prevents uploaded shell execution)
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|phar|cgi|pl|py|sh|bash)$">
+    Require all denied
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+
+# Force download of non-image files
+<FilesMatch "\.(?!jpg|jpeg|png|webp|gif)">
+    Header set Content-Disposition attachment
+</FilesMatch>

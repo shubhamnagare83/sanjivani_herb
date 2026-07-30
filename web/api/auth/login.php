@@ -18,12 +18,9 @@ if (empty($data)) {
     $data = $_POST;
 }
 
-// Validate CSRF token for form submissions (not API calls)
-if (!$isApi && !empty($data['csrf_token'])) {
-    if (!validateCSRFToken($data['csrf_token'])) {
-        if ($isApi) {
-            jsonResponse(['error' => 'Invalid CSRF token'], 403);
-        }
+// CSRF validation is MANDATORY for form submissions (prevents cross-site request forgery)
+if (!$isApi) {
+    if (empty($data['csrf_token']) || !validateCSRFToken($data['csrf_token'])) {
         header('Location: ' . APP_URL . '/pages/login.php?error=' . urlencode('Session expired. Please try again.'));
         exit;
     }
