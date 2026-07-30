@@ -17,10 +17,12 @@ $db = getDB();
 $data = getJsonBody();
 if (empty($data)) $data = $_POST;
 
-// Validate CSRF token for web session actions
+// Validate CSRF token for web session actions (skip for API token auth)
+$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+$isTokenAuth = !empty($authHeader) && stripos($authHeader, 'Bearer') === 0;
 $csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 $tokenToTest = $data['csrf_token'] ?? $csrfHeader;
-if (isset($_SESSION['user_id']) && !validateCSRFToken($tokenToTest)) {
+if (!$isTokenAuth && isset($_SESSION['user_id']) && !validateCSRFToken($tokenToTest)) {
     jsonResponse(['error' => 'Invalid or missing CSRF token'], 403);
 }
 

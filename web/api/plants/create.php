@@ -18,8 +18,10 @@ $db = getDB();
 // Get data from form or JSON
 $data = !empty($_POST) ? $_POST : getJsonBody();
 
-// CSRF validation for session-authenticated web requests
-if (isset($_SESSION['user_id']) && !empty($_POST)) {
+// CSRF validation for session-authenticated web requests (skip for API token auth)
+$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+$isTokenAuth = !empty($authHeader) && stripos($authHeader, 'Bearer') === 0;
+if (!$isTokenAuth && isset($_SESSION['user_id']) && !empty($_POST)) {
     if (empty($data['csrf_token']) || !validateCSRFToken($data['csrf_token'])) {
         jsonResponse(['error' => 'Invalid or expired CSRF token'], 403);
     }

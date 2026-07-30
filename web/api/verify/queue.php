@@ -24,7 +24,10 @@ $stmt = $db->prepare("
     WHERE pr.institution_id = ? AND pr.status = 'pending_verification'
     ORDER BY pr.created_at ASC LIMIT ? OFFSET ?
 ");
-$stmt->execute([$user['institution_id'], $pagination['limit'], $pagination['offset']]);
+$stmt->bindValue(1, $user['institution_id']);
+$stmt->bindValue(2, (int)$pagination['limit'], PDO::PARAM_INT);
+$stmt->bindValue(3, (int)$pagination['offset'], PDO::PARAM_INT);
+$stmt->execute();
 $records = $stmt->fetchAll();
 
 foreach ($records as &$r) {
