@@ -204,17 +204,26 @@ function sanitize(string $input): string {
 }
 
 /**
- * Handle CORS preflight — restricted to same-origin
+ * Handle CORS preflight — supports React dev server and production origins
  */
 function handleCORS(): void {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowed = defined('APP_URL') ? parse_url(APP_URL, PHP_URL_HOST) : 'localhost';
-    if ($origin && parse_url($origin, PHP_URL_HOST) === $allowed) {
+    
+    // Allowed origins: React dev server + production
+    $allowedOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+    if (defined('APP_URL')) {
+        $allowedOrigins[] = APP_URL;
+    }
+    if (defined('CORS_ALLOWED_ORIGINS') && is_array(CORS_ALLOWED_ORIGINS)) {
+        $allowedOrigins = array_merge($allowedOrigins, CORS_ALLOWED_ORIGINS);
+    }
+    
+    if ($origin && in_array($origin, $allowedOrigins)) {
         header('Access-Control-Allow-Origin: ' . $origin);
         header('Access-Control-Allow-Credentials: true');
     }
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token, Accept');
     
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(204);
@@ -224,3 +233,4 @@ function handleCORS(): void {
 
 // Always handle CORS
 handleCORS();
+
