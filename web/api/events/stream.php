@@ -12,13 +12,13 @@ require_once __DIR__ . '/../../includes/helpers.php';
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 header('Connection: keep-alive');
-header('X-Accel-Buffering: no'); // Disable Nginx buffering
-
-// Turn off output buffering
 if (ob_get_level()) ob_end_clean();
 
 $db = getDB();
 $lastTime = $_GET['since'] ?? date('Y-m-d H:i:s', time() - 30);
+
+// Release PHP session lock immediately so parallel page navigation is instant
+session_write_close();
 
 // SSE event loop
 $maxExecution = 25; // Send heartbeats for ~25 seconds then let browser reconnect automatically
