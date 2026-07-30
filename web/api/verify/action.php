@@ -17,6 +17,13 @@ $db = getDB();
 $data = getJsonBody();
 if (empty($data)) $data = $_POST;
 
+// Validate CSRF token for web session actions
+$csrfHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+$tokenToTest = $data['csrf_token'] ?? $csrfHeader;
+if (isset($_SESSION['user_id']) && !validateCSRFToken($tokenToTest)) {
+    jsonResponse(['error' => 'Invalid or missing CSRF token'], 403);
+}
+
 $error = validateRequired($data, ['plant_record_id', 'action']);
 if ($error) jsonResponse(['error' => $error], 400);
 
@@ -64,7 +71,7 @@ try {
             }
             if (isset($data['notes'])) {
                 $updates[] = 'notes = ?';
-                $updateParams[] = $data['notes'];
+                $updateParams[] = sanitize($data['notes']);
             }
             
             $updateParams[] = $plantId;
@@ -102,5 +109,6 @@ try {
     
 } catch (Exception $e) {
     $db->rollBack();
-    jsonResponse(['error' => 'Verification failed: ' . $e->getMessage()], 500);
+    error_log('Verification error: ' . $e->getMessage());
+    jsonResponse(['error' => 'Verification failed. Please try again.'], 500);
 }

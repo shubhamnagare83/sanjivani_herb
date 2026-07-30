@@ -15,9 +15,9 @@ $isApi = isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'appl
 $data = getJsonBody();
 if (empty($data)) $data = $_POST;
 
-// CSRF validation for form submissions
-if (!$isApi && !empty($data['csrf_token'])) {
-    if (!validateCSRFToken($data['csrf_token'])) {
+// CSRF validation is MANDATORY for form submissions
+if (!$isApi) {
+    if (empty($data['csrf_token']) || !validateCSRFToken($data['csrf_token'])) {
         header('Location: ' . APP_URL . '/pages/register.php?error=' . urlencode('Session expired. Please try again.'));
         exit;
     }
@@ -64,7 +64,8 @@ if (!$inst) {
     exit;
 }
 
-$institutionId = $data['institution_id'] ?? $inst['id'];
+// SECURITY: Always use server-side institution. Never trust user-supplied institution_id.
+$institutionId = $inst['id'];
 $role = 'contributor'; // Always contributor for self-registration
 
 $result = registerUser($email, $data['password'], $fullName, $institutionId, $role);

@@ -1,0 +1,7 @@
+node_modules/
+frontend/node_modules/
+web/uploads/plant-photos/*
+!web/uploads/plant-photos/.gitkeep
+.uix/
+.DS_Store
+Thumbs.db

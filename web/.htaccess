@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Allow direct access to API endpoints and uploads
+    RewriteRule ^api/ - [L]
+    RewriteRule ^uploads/ - [L]
+
+    # Serve static assets if they exist
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Route all SPA paths to React index.html
+    RewriteRule . /index.html [L]
+</IfModule>

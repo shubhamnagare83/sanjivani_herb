@@ -1,6 +1,6 @@
 <?php
 /**
- * Capture & AI Identification Screen
+ * Capture & Manual Entry Screen
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/helpers.php';
@@ -9,12 +9,13 @@ $user = requireAuth();
 $db = getDB();
 
 $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
+$speciesList = $db->query("SELECT id, scientific_name, common_name, family FROM species ORDER BY common_name ASC")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Capture & Identify Plant | Sanjivani Herb</title>
+  <title>Capture & Add Plant | Sanjivani Herb</title>
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -23,24 +24,6 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
     }
     .step-card.active {
       display: block;
-    }
-    .candidate-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-color);
-      cursor: pointer;
-      margin-bottom: 0.75rem;
-      transition: all 0.2s ease;
-    }
-    .candidate-card:hover, .candidate-card.selected {
-      border-color: var(--accent-primary);
-      background: rgba(16, 185, 129, 0.1);
-    }
-    .candidate-card.selected {
-      box-shadow: 0 0 0 2px var(--accent-primary);
     }
   </style>
 </head>
@@ -92,49 +75,52 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
       </div>
 
       <button id="btnToStep2" type="button" class="btn btn-primary" style="width: 100%;" disabled>
-        Proceed to AI Identification <i class="fa-solid fa-arrow-right"></i>
+        Proceed to Fill Details <i class="fa-solid fa-arrow-right"></i>
       </button>
     </div>
 
-    <!-- STEP 2: AI Identification Loading & Candidate Selection -->
+    <!-- STEP 2: Manual Plant Details Entry -->
     <div id="step2" class="glass-card step-card" style="padding: 2rem;">
-      <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-robot"></i> Step 2: AI Species Identification</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">Pl@ntNet neural network model analyzed your image.</p>
-
-      <div id="aiLoading" style="text-align: center; padding: 3rem 0;">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
-        <h4>Analyzing Plant Image...</h4>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Comparing against 10,000+ botanical species</p>
-      </div>
-
-      <div id="aiResults" style="display: none;">
-        <h4 style="margin-bottom: 1rem;">Select Candidate Species:</h4>
-        <div id="candidatesList"></div>
-
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-          <button type="button" onclick="goToStep(1)" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
-          <button id="btnToStep3" type="button" class="btn btn-primary" style="flex:1;">Confirm & Details <i class="fa-solid fa-arrow-right"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <!-- STEP 3: Final Details & Submit -->
-    <div id="step3" class="glass-card step-card" style="padding: 2rem;">
-      <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check-double"></i> Step 3: Confirm Observation</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">Review species, campus zone, and add optional notes.</p>
+      <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-pen-to-square"></i> Step 2: Plant Details (Manual Entry)</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">Select an existing species from the catalog or enter custom plant details manually.</p>
 
       <form id="plantForm">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCSRFToken()) ?>">
         <input type="hidden" id="selectedSpeciesId" name="species_id">
-        <input type="hidden" id="selectedScientific" name="scientific_name">
-        <input type="hidden" id="selectedCommon" name="common_name">
-        <input type="hidden" id="selectedFamily" name="family">
-        <input type="hidden" id="aiConfidenceInput" name="ai_confidence">
         <input type="hidden" id="latInput" name="latitude">
         <input type="hidden" id="lngInput" name="longitude">
 
+        <!-- Species Selection Dropdown -->
         <div class="form-group">
-          <label class="form-label">Selected Species</label>
-          <input type="text" id="speciesDisplay" class="form-control" readonly style="font-weight: 700; color: var(--accent-primary);">
+          <label class="form-label">Select Species from Database</label>
+          <select id="speciesSelect" class="form-control" onchange="handleSpeciesSelect(this.value)">
+            <option value="">-- Select Existing Species or Choose Custom --</option>
+            <?php foreach ($speciesList as $sp): ?>
+              <option value="<?= htmlspecialchars($sp['id']) ?>" 
+                      data-scientific="<?= htmlspecialchars($sp['scientific_name']) ?>"
+                      data-common="<?= htmlspecialchars($sp['common_name'] ?? '') ?>"
+                      data-family="<?= htmlspecialchars($sp['family'] ?? '') ?>">
+                <?= htmlspecialchars(($sp['common_name'] ? $sp['common_name'] . ' — ' : '') . $sp['scientific_name']) ?>
+              </option>
+            <?php endforeach; ?>
+            <option value="custom">➕ Enter Custom Species Manually</option>
+          </select>
+        </div>
+
+        <!-- Manual Input Fields -->
+        <div class="form-group">
+          <label class="form-label">Common Name *</label>
+          <input type="text" id="commonInput" name="common_name" class="form-control" placeholder="e.g. Neem Tree, Banyan Tree" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Scientific Name *</label>
+          <input type="text" id="scientificInput" name="scientific_name" class="form-control" placeholder="e.g. Azadirachta indica" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Family (Optional)</label>
+          <input type="text" id="familyInput" name="family" class="form-control" placeholder="e.g. Meliaceae, Moraceae">
         </div>
 
         <div class="form-group">
@@ -149,11 +135,11 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
 
         <div class="form-group">
           <label class="form-label">Observation Notes (Optional)</label>
-          <textarea name="notes" class="form-control" rows="3" placeholder="e.g. Near botanical garden fountain, healthy condition"></textarea>
+          <textarea name="notes" class="form-control" rows="3" placeholder="e.g. Healthy condition, near science department entrance"></textarea>
         </div>
 
         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-          <button type="button" onclick="goToStep(2)" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          <button type="button" onclick="goToStep(1)" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
           <button type="submit" class="btn btn-primary" style="flex:1;"><i class="fa-solid fa-paper-plane"></i> Submit to Live Map</button>
         </div>
       </form>
@@ -165,7 +151,6 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
     let photoFile = null;
     let gpsLat = 19.8762;
     let gpsLng = 74.5981;
-    let selectedCandidate = null;
 
     // Get Geolocation
     function getGPS() {
@@ -202,92 +187,44 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
     function goToStep(stepNum) {
       document.querySelectorAll('.step-card').forEach(card => card.classList.remove('active'));
       document.getElementById('step' + stepNum).classList.add('active');
-
-      if (stepNum === 2) {
-        triggerAI();
-      }
     }
 
-    document.getElementById('btnToStep2').addEventListener('click', () => goToStep(2));
-
-    // Call AI Endpoint
-    function triggerAI() {
-      document.getElementById('aiLoading').style.display = 'block';
-      document.getElementById('aiResults').style.display = 'none';
-
-      const formData = new FormData();
-      formData.append('photo', photoFile);
-      formData.append('latitude', gpsLat);
-      formData.append('longitude', gpsLng);
-
-      fetch('../api/plants/identify.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('aiLoading').style.display = 'none';
-        document.getElementById('aiResults').style.display = 'block';
-
-        if (data.success && data.candidates) {
-          renderCandidates(data.candidates, data.suggested_zone_id);
-        } else {
-          document.getElementById('candidatesList').innerHTML = `<p style="color:#ef4444;">AI identification unavailable. Please enter species manually.</p>`;
-        }
-      });
-    }
-
-    function renderCandidates(candidates, suggestedZoneId) {
-      const container = document.getElementById('candidatesList');
-      container.innerHTML = '';
-
-      if (suggestedZoneId) {
-        document.getElementById('zoneInput').value = suggestedZoneId;
-      }
-
-      candidates.forEach((cand, idx) => {
-        const div = document.createElement('div');
-        div.className = `candidate-card ${idx === 0 ? 'selected' : ''}`;
-        div.onclick = () => selectCandidate(cand, div);
-
-        div.innerHTML = `
-          <div style="font-size: 1.5rem; color: var(--accent-primary);">🌿</div>
-          <div style="flex:1;">
-            <div style="font-weight: 700;">${cand.common_name || cand.scientific_name}</div>
-            <div style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">${cand.scientific_name}</div>
-          </div>
-          <div style="text-align: right;">
-            <span class="badge badge-verified">${cand.confidence}% match</span>
-          </div>
-        `;
-
-        container.appendChild(div);
-        if (idx === 0) selectCandidate(cand, div);
-      });
-    }
-
-    function selectCandidate(cand, elem) {
-      document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
-      elem.classList.add('selected');
-      selectedCandidate = cand;
-
-      document.getElementById('selectedSpeciesId').value = cand.species_id || '';
-      document.getElementById('selectedScientific').value = cand.scientific_name;
-      document.getElementById('selectedCommon').value = cand.common_name;
-      document.getElementById('selectedFamily').value = cand.family;
-      document.getElementById('aiConfidenceInput').value = cand.confidence;
-      document.getElementById('speciesDisplay').value = `${cand.common_name || cand.scientific_name} (${cand.scientific_name})`;
-    }
-
-    document.getElementById('btnToStep3').addEventListener('click', () => {
+    document.getElementById('btnToStep2').addEventListener('click', () => {
       document.getElementById('latInput').value = gpsLat;
       document.getElementById('lngInput').value = gpsLng;
-      goToStep(3);
+      goToStep(2);
     });
+
+    // Populate inputs when an existing species is selected from dropdown
+    function handleSpeciesSelect(val) {
+      const select = document.getElementById('speciesSelect');
+      const selectedOpt = select.options[select.selectedIndex];
+
+      if (val && val !== 'custom') {
+        document.getElementById('selectedSpeciesId').value = val;
+        document.getElementById('commonInput').value = selectedOpt.getAttribute('data-common') || '';
+        document.getElementById('scientificInput').value = selectedOpt.getAttribute('data-scientific') || '';
+        document.getElementById('familyInput').value = selectedOpt.getAttribute('data-family') || '';
+      } else {
+        document.getElementById('selectedSpeciesId').value = '';
+        if (val === 'custom') {
+          document.getElementById('commonInput').value = '';
+          document.getElementById('scientificInput').value = '';
+          document.getElementById('familyInput').value = '';
+          document.getElementById('commonInput').focus();
+        }
+      }
+    }
 
     // Form submission
     document.getElementById('plantForm').addEventListener('submit', function(e) {
       e.preventDefault();
+
+      if (!photoFile) {
+        alert('Please choose or take a photo in Step 1 first.');
+        goToStep(1);
+        return;
+      }
 
       const formData = new FormData(this);
       formData.append('photo', photoFile);
@@ -302,8 +239,11 @@ $zones = $db->query("SELECT id, name FROM zones ORDER BY name ASC")->fetchAll();
           alert('🌱 Observation successfully added to Live Map!');
           window.location.href = 'dashboard.php';
         } else {
-          alert('Error: ' + data.error);
+          alert('Error: ' + (data.error || 'Failed to submit observation'));
         }
+      })
+      .catch(err => {
+        alert('Error submitting form: ' + err.message);
       });
     });
   </script>

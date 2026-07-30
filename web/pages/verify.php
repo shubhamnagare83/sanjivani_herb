@@ -11,6 +11,7 @@ $user = requireRole('verifier');
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="csrf-token" content="<?= generateCSRFToken() ?>">
   <title>Verification Queue | Sanjivani Herb</title>
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -133,10 +134,14 @@ $user = requireRole('verifier');
     }
 
     function handleAction(plantId, action) {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
       fetch('../api/verify/action.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plant_record_id: plantId, action: action })
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ plant_record_id: plantId, action: action, csrf_token: csrfToken })
       })
       .then(res => res.json())
       .then(data => {

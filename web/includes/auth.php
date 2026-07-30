@@ -14,13 +14,16 @@
 
 require_once __DIR__ . '/../config/database.php';
 
-// Secure session configuration
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_samesite', 'Strict');
-ini_set('session.use_strict_mode', '1');
-ini_set('session.use_only_cookies', '1');
-
-session_start();
+// Secure session configuration with array options
+if (session_status() === PHP_SESSION_NONE) {
+    session_start([
+        'cookie_httponly' => true,
+        'cookie_samesite' => 'Strict',
+        'use_strict_mode' => true,
+        'use_only_cookies' => true,
+        'cookie_secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    ]);
+}
 
 /**
  * Hash a password (cost 12 for security)
